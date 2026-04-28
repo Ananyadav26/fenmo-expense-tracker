@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId"); 
+    const userId = searchParams.get("userId");
     const category = searchParams.get("category");
     const sort = searchParams.get("sort");
 
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(expenses);
   } catch (error) {
+    console.error("GET Error:", error);
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
   }
 }
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
 
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Idempotency: Prevent duplicates
     const existing = await prisma.expense.findUnique({ where: { id } });
     if (existing) return NextResponse.json(existing, { status: 200 });
 
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
       data: {
         id,
         userId,
-        amount,
+        amount, // In cents!
         category,
         description,
         date: new Date(date),
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newExpense, { status: 201 });
   } catch (error) {
-    console.error(error);
+    console.error("POST Error:", error);
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
@@ -68,6 +70,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("DELETE Error:", error);
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }
