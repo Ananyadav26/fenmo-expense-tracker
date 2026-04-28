@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fenmo Personal Finance Tool
 
-## Getting Started
+A production-ready, full-stack Expense Tracker built for the Fenmo SDE Technical Assessment.
 
-First, run the development server:
+## 🚀 Live Links
+- **Application:**https://fenmo-expense-tracker-gray.vercel.app/
+- **Repository:**https://github.com/Ananyadav26/fenmo-expense-tracker
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠️ Tech Stack
+- **Framework:** Next.js 14 (App Router)
+- **Database:** Server-Side In-Memory Store (Pivoted from Supabase)
+- **Styling:** Tailwind CSS + Recharts (Analytics)
+- **Validation:** React Hook Form + Zod
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🧠 Key Design Decisions & Trade-offs
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Persistence Mechanism Pivot (In-Memory Store)
+**Trade-off:** Initially, I fully integrated Supabase (PostgreSQL) via Prisma. However, during the final Vercel deployment, connection pooling timeouts (`PrismaClientInitializationError`) threatened to break the live app. 
+**Decision:** To strictly honor the 4-hour timebox and deliver a **feature-complete and bug-free** application, I immediately pivoted to a global in-memory Node.js array (which is explicitly allowed in the assessment guidelines). This allowed me to prioritize data correctness, API idempotency, and the analytics UI over wrestling with cloud database configurations under a ticking clock.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. Money Handling (The Cents Pattern)
+To ensure absolute data correctness and avoid floating-point binary arithmetic errors, the application handles money using the **Cents Pattern**. All currency is multiplied by 100 on the frontend, stored as an integer on the backend, and divided by 100 for UI display.
 
-## Learn More
+### 3. Idempotency & Network Resilience
+Every expense generated on the frontend is assigned a unique `UUID` before the API call. If a `POST` request is retried due to an unreliable network or a double-click, the backend prevents duplicate entries, ensuring data correctness.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Personalization Strategy
+To ensure a realistic user experience without the overhead of configuring OAuth, the app utilizes a "Local Device Profile" strategy. A unique `userId` is generated on the first visit, stored in `localStorage`, and attached to all API queries.
