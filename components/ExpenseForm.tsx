@@ -18,7 +18,7 @@ type ExpenseFormValues = z.infer<typeof expenseSchema>;
 export default function ExpenseForm({ userId, onRefresh }: { userId: string, onRefresh: () => void }) {
   const[isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ExpenseFormValues>({
-    resolver: zodResolver(expenseSchema),
+    resolver: zodResolver(expenseSchema) as any, // <-- Add "as any" here
   });
 
   // THE FENMO FLEX: Fake AI Parsing (Instantly fills the form to impress the recruiter)
@@ -35,7 +35,7 @@ export default function ExpenseForm({ userId, onRefresh }: { userId: string, onR
     }, 800);
   };
 
-  const onSubmit = async (data: ExpenseFormValues) => {
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/expenses", {
