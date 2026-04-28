@@ -1,4 +1,4 @@
-# Fenmo Personal Finance Tool
+# Fenmo Expense Tracker tool
 
 A production-ready, full-stack Expense Tracker built for the Fenmo SDE Technical Assessment.
 
