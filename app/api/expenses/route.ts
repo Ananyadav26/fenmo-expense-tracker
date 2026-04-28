@@ -1,22 +1,74 @@
-// app/api/expenses/route.ts
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const category = searchParams.get("category");
-  const sort = searchParams.get("sort");
-  let result = [...db.expenses];
-  if (category && category !== "All") result = result.filter(e => e.category === category);
-  if (sort === "date_desc") result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return NextResponse.json(result);
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId"); 
+    const category = searchParams.get("category");
+    const sort = searchParams.get("sort");
+
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const expenses = await prisma.expense.findMany({
+      where: {
+        userId: userId,
+        ...(category && category !== "All" ? { category } : {}),
+      },
+      orderBy: {
+        date: sort === "date_asc" ? "asc" : "desc",
+      },
+    });
+
+    return NextResponse.json(expenses);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  // Idempotency check: prevents duplicates on network retries
-  if (db.expenses.find(e => e.id === body.id)) return NextResponse.json(body, { status: 200 });
-  const newExpense = { ...body, created_at: new Date().toISOString() };
-  db.expenses.push(newExpense);
-  return NextResponse.json(newExpense, { status: 201 });
+  try {
+    const body = await request.json();
+    const { id, userId, amount, category, description, date } = body;
+
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Idempotency: prevent duplicates on double-clicks
+    const existing = await prisma.expense.findUnique({ where: { id } });
+    if (existing) return NextResponse.json(existing, { status: 200 });
+
+    const newExpense = await prisma.expense.create({
+      data: {
+        id,
+        userId,
+        amount, // Stored in cents
+        category,
+        description,
+        date: new Date(date),
+      },
+    });
+
+    return NextResponse.json(newExpense, { status: 201 });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const userId = searchParams.get("userId");
+
+    if (!id || !userId) return NextResponse.json({ error: "Missing data" }, { status: 400 });
+
+    await prisma.expense.deleteMany({
+      where: { id, userId }, // deleteMany prevents errors if it doesn't exist, and ensures user ownership
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+  }
 }
