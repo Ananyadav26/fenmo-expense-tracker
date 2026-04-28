@@ -9,16 +9,15 @@ export default function ExpenseList({ userId, refreshTrigger }: { userId: string
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cat, setCat] = useState("All");
-  const[sort, setSort] = useState("date_desc"); // <-- MAKE SURE THIS IS HERE
+  const [sort, setSort] = useState("date_desc");
 
   const fetchExpenses = async () => {
     setLoading(true);
     try {
-      // <-- MAKE SURE SORT IS IN THIS URL
-      const res = await fetch(`/api/expenses?userId=${userId}&category=${cat}&sort=${sort}`); 
+      const res = await fetch(`/api/expenses?userId=${userId}&category=${cat}&sort=${sort}`);
       if (res.ok) setExpenses(await res.json());
     } catch {
-      toast.error("Failed to load expenses");
+      toast.error("Failed to load");
     } finally {
       setLoading(false);
     }
@@ -28,10 +27,9 @@ export default function ExpenseList({ userId, refreshTrigger }: { userId: string
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/expenses?id=${id}&userId=${userId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await fetch(`/api/expenses?id=${id}&userId=${userId}`, { method: "DELETE" });
       toast.success("Deleted!");
-      fetchExpenses(); // Refresh list immediately
+      fetchExpenses(); 
     } catch {
       toast.error("Could not delete");
     }
@@ -49,17 +47,16 @@ export default function ExpenseList({ userId, refreshTrigger }: { userId: string
           </div>
         </div>
 
-        <div className="mb-6 flex gap-4">
-          <select value={cat} onChange={(e) => setCat(e.target.value)} className="p-2 border border-gray-300 rounded-md text-sm w-full md:w-64">
+        <div className="mb-6 flex flex-col md:flex-row gap-4">
+          <select value={cat} onChange={(e) => setCat(e.target.value)} className="p-2 border border-gray-300 rounded-md text-sm w-full">
             <option value="All">All Categories</option>
             <option value="Food & Dining">Food & Dining</option>
             <option value="Transportation">Transportation</option>
             <option value="Utilities">Utilities</option>
-            <option value="Subscriptions">Subscriptions</option>
             <option value="Entertainment">Entertainment</option>
           </select>
 
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="p-2 border border-gray-300 rounded-md text-sm w-full md:w-64">
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className="p-2 border border-gray-300 rounded-md text-sm w-full">
             <option value="date_desc">Newest First</option>
             <option value="date_asc">Oldest First</option>
           </select>
@@ -82,7 +79,7 @@ export default function ExpenseList({ userId, refreshTrigger }: { userId: string
                 </div>
                 <div className="flex items-center gap-4">
                   <p className="font-semibold text-gray-900">₹{(expense.amount / 100).toFixed(2)}</p>
-                  <button onClick={() => handleDelete(expense.id)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">
+                  <button onClick={() => handleDelete(expense.id)} className="text-red-400 hover:text-red-600 transition-opacity">
                     🗑️
                   </button>
                 </div>
@@ -91,7 +88,6 @@ export default function ExpenseList({ userId, refreshTrigger }: { userId: string
           </div>
         )}
       </div>
-
       <ExpenseChart expenses={expenses} />
     </>
   );

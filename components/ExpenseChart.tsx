@@ -1,10 +1,11 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import type { Expense } from '@prisma/client';
 
 const COLORS =['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
 
-export default function ExpenseChart({ expenses }: { expenses: any[] }) {
+export default function ExpenseChart({ expenses }: { expenses: Expense[] }) {
   const dataMap = expenses.reduce((acc, curr) => {
     if (!acc[curr.category]) acc[curr.category] = 0;
     acc[curr.category] += (curr.amount / 100);
